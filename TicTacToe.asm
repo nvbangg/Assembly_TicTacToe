@@ -1,33 +1,30 @@
 .MODEL SMALL
 .STACK 100H
 .DATA
-    ; Bảng trò chơi (lưới 3x3)
-    BANG        DB '1', '2', '3', '4', '5', '6', '7', '8', '9'
-    
-    ; Các thông báo hiển thị
-    LUOT_X      DB 'Luot X. Nhap vi tri (1-9): $'
-    LUOT_O      DB 'Luot O. Nhap vi tri (1-9): $'
-    NUOC_LOI    DB 'Nuoc di khong hop le! Thu lai.$'
-    X_THANG     DB 'NGUOI CHOI X THANG CUOC!$'
-    O_THANG     DB 'NGUOI CHOI O THANG CUOC!$'
-    VAN_HOA     DB 'VAN HOA$'
-    CHOI_LAI    DB 'Choi lai? (Y/N): $'
-    
-    NGUOI_CHOI  DB 'X'               ; Người chơi hiện tại
-    XUONG_DONG  DB 13, 10, '$'       ; Ký tự xuống dòng
-    DUONG_KE    DB '---+---+---$'    ; Đường phân cách
-    NGUOI_THANG DB ' ', '$'          ; Lưu người thắng (X, O hoặc D cho hòa)
+    ; Bảng trò chơi 3x3 và thông báo
+    BANG       DB '123456789'
+    LUOT_X     DB 'Luot X. Nhap vi tri (1-9): $'
+    LUOT_O     DB 'Luot O. Nhap vi tri (1-9): $'
+    NUOC_LOI   DB 'Nuoc di khong hop le! Thu lai.$'
+    X_THANG    DB 'NGUOI CHOI X THANG CUOC!$'
+    O_THANG    DB 'NGUOI CHOI O THANG CUOC!$'
+    VAN_HOA    DB 'VAN HOA$'
+    CHOI_LAI   DB 'Choi lai? (Y/N): $'
+    NGUOI_CHOI DB 'X'           ; Lượt hiện tại
+    XUONG_DONG DB 13, 10, '$'   ; CR+LF
+    DUONG_KE   DB '---+---+---$'
+    NGUOI_THANG DB ' ','$'      ; X, O hoặc D
+    VT_CHIA    DB ' | | $'      ; Mẫu chia cột
 
 .CODE
 MAIN PROC
-    MOV  AX, @DATA
-    MOV  DS, AX
-    
+    MOV AX, @DATA
+    MOV DS, AX
     CALL KHOI_TAO
     
-VONG_CHOI:           
-    CALL HIEN_THI_BANG           ; Hiển thị bảng
-    CALL NHAP_NUOC_DI            ; Lấy nước đi
+VONG_CHOI:
+    CALL HIEN_THI_BANG
+    CALL NHAP_NUOC_DI
     
     CALL KIEM_TRA_KET_THUC       ; Kiểm tra kết thúc
     CMP  AL, 1
@@ -61,33 +58,26 @@ HIEN_KET_QUA:
     MOV  AH, 9
     INT  21H
     
-    LEA  DX, XUONG_DONG
-    MOV  AH, 9
+    LEA  DX, XUONG_DONG          ; Xuống dòng 2 lần
     INT  21H
-    LEA  DX, XUONG_DONG
-    MOV  AH, 9
-    INT  21H
+    INT  21H                     ; Không cần lặp lại LEA DX
     
     LEA  DX, CHOI_LAI            ; Hỏi chơi lại
-    MOV  AH, 9
     INT  21H
     
-    MOV  AH, 1
+    MOV  AH, 1                   ; Nhận đầu vào
     INT  21H
     
     AND  AL, 11011111b           ; Chuyển thường thành hoa
     CMP  AL, 'Y'
     JE   CHOI_LAI_GAME
     
-    JMP  THOAT
+    MOV  AH, 4CH                 ; Kết thúc chương trình
+    INT  21H
     
 CHOI_LAI_GAME:       
-    CALL KHOI_TAO
+    CALL KHOi_TAO
     JMP  VONG_CHOI
-    
-THOAT:               
-    MOV  AH, 4CH
-    INT  21H
 MAIN ENDP
 
 ; Khởi tạo trò chơi
@@ -127,7 +117,7 @@ VONG_HANG:
     MOV  DL, [SI + BX]           ; Ô 1
     INT  21H
     
-    MOV  DL, ' '
+    MOV  DL, ' '                 ; Phân cách
     INT  21H
     MOV  DL, '|'
     INT  21H
@@ -137,7 +127,7 @@ VONG_HANG:
     MOV  DL, [SI + BX + 1]       ; Ô 2
     INT  21H
     
-    MOV  DL, ' '
+    MOV  DL, ' '                 ; Phân cách
     INT  21H
     MOV  DL, '|'
     INT  21H
@@ -147,20 +137,17 @@ VONG_HANG:
     MOV  DL, [SI + BX + 2]       ; Ô 3
     INT  21H
     
-    LEA  DX, XUONG_DONG          ; Xuống dòng
-    MOV  AH, 9
+    MOV  AH, 9                   ; Chuyển sang INT 9 để hiển thị chuỗi
+    LEA  DX, XUONG_DONG
     INT  21H
     
-    POP  CX                      ; Hiển thị đường phân cách (trừ dòng cuối)
-    CMP  CX, 1                   ; CX = 1 là dòng cuối
+    POP  CX
+    CMP  CX, 1                   ; Nếu không phải dòng cuối, hiển thị đường kẻ
     JE   BO_QUA_KE
     
     LEA  DX, DUONG_KE
-    MOV  AH, 9
     INT  21H
-    
     LEA  DX, XUONG_DONG
-    MOV  AH, 9
     INT  21H
     
 BO_QUA_KE:           
@@ -168,7 +155,6 @@ BO_QUA_KE:
     LOOP VONG_HANG
     
     LEA  DX, XUONG_DONG          ; Thêm dòng trống
-    MOV  AH, 9
     INT  21H
     
     RET
@@ -220,16 +206,14 @@ HIEN_NHAC:
     RET
     
 NHAP_SAI:            
-    LEA  DX, XUONG_DONG
     MOV  AH, 9
+    LEA  DX, XUONG_DONG          ; Hiển thị thông báo lỗi và xuống dòng
     INT  21H
     
     LEA  DX, NUOC_LOI
-    MOV  AH, 9
     INT  21H
     
     LEA  DX, XUONG_DONG
-    MOV  AH, 9
     INT  21H
     
     JMP  NHAP_NUOC_DI            ; Thử lại
@@ -254,6 +238,7 @@ DOI_NGUOI_CHOI ENDP
 KIEM_TRA_KET_THUC PROC
     LEA  SI, BANG
     
+    ; Thay thế vòng lặp bằng cách kiểm tra trực tiếp
     MOV  BX, 0                   ; Kiểm tra hàng 1
     CALL KIEM_TRA_HANG
     JE   TIM_THAY_NGUOI_THANG
@@ -294,32 +279,29 @@ KIEM_TRA_KET_THUC PROC
     
 KIEM_TRA_HOA:        
     MOV  AL, [SI]
-    CMP  AL, '1'                 ; Nếu < '1' là X hoặc O
+    CMP  AL, '1'
     JL   VI_TRI_KE
-    CMP  AL, '9'                 ; Nếu > '9' là X hoặc O
+    CMP  AL, '9'
     JG   VI_TRI_KE
     
-    MOV  AL, 0                   ; Còn ô trống -> tiếp tục
+    XOR  AL, AL                  ; Còn ô trống -> tiếp tục
     RET
     
 VI_TRI_KE:           
     INC  SI
     LOOP KIEM_TRA_HOA
     
-    ; Hòa - không hiển thị thông báo ở đây nữa
-    MOV  NGUOI_THANG, 'D'        ; Đánh dấu là hòa
-    MOV  AL, 1                   ; Trò chơi kết thúc
+    MOV  NGUOI_THANG, 'D'        ; Đánh dấu hòa
+    MOV  AL, 1
     RET
     
 TIM_THAY_NGUOI_THANG:
-    ; Lưu người thắng vào biến
-    MOV  NGUOI_THANG, AL         ; Lưu X hoặc O
-    
-    MOV  AL, 1                   ; Trò chơi kết thúc
+    MOV  NGUOI_THANG, AL
+    MOV  AL, 1
     RET
 KIEM_TRA_KET_THUC ENDP
 
-; Kiểm tra 3 ô liên tiếp (hàng ngang)
+; Các thủ tục kiểm tra phụ
 KIEM_TRA_HANG PROC
     MOV  AL, [SI + BX]           ; Ô đầu tiên
     CMP  AL, [SI + BX + 1]       ; So với ô thứ hai
@@ -334,7 +316,6 @@ KHONG_BANG:
     RET
 KIEM_TRA_HANG ENDP
 
-; Kiểm tra 3 ô với bước nhảy tùy chỉnh (cột, đường chéo)
 KIEM_TRA_DUONG PROC
     PUSH BX                      ; Lưu BX
     
