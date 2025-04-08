@@ -2,7 +2,6 @@
 .MODEL SMALL 
 .STACK 100H
 .DATA
-    ; Khu vực lưu dữ liệu trò chơi
     BANG       DB '123456789'   ; Mảng 3x3 lưu vị trí
     LUOT_X     DB 'Luot X. Nhap vi tri (1-9): $'
     LUOT_O     DB 'Luot O. Nhap vi tri (1-9): $'
