@@ -2,7 +2,7 @@
 .MODEL SMALL 
 .STACK 100H
 .DATA
-    BANG      DB '123456789'   ; Lưu trạng thái 9 ô của bảng 3x3
+    BANG       DB '123456789'   ; Lưu trạng thái 9 ô của bảng 3x3
     HIENTHI    DB 13,10
                DB '  |   |  ',13,10
                DB '---------',13,10
@@ -124,10 +124,10 @@ NHAP_NUOC PROC
     MOV  AH, 9          ; Hàm hiển thị chuỗi
     LEA  DX, LUOT_X     ; Mặc định thông báo lượt X
     CMP  LUOT_CHOI, 'X' ; Kiểm tra lượt hiện tại
-    JE   HIEN_NHAC      ; Nếu là X thì hiển thị
+    JE   HIEN_NHAP      ; Nếu là X thì hiển thị
     LEA  DX, LUOT_O     ; Nếu là O thì đổi thông báo
      
-HIEN_NHAC:            
+HIEN_NHAP:            
     INT  21H            ; Hiển thị thông báo lượt đi
      
     MOV  AH, 1          ; Hàm nhận một ký tự
