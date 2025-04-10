@@ -171,7 +171,7 @@ NHAP_NUOC_DI ENDP
 ; Đổi người chơi
 DOI_NGUOI_CHOI PROC
     MOV  AL, NGUOI_CHOI         ; Lấy giá trị hiện tại
-    XOR  AL, ('X' XOR 'O')      ; Đổi X <-> O
+    XOR  AL, 17h                ; Đổi X <-> O (17h = 'X' XOR 'O' = 88 XOR 79)
     MOV  NGUOI_CHOI, AL
     RET
 DOI_NGUOI_CHOI ENDP
