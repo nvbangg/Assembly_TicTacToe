@@ -1,8 +1,8 @@
-.MODEL SMALL
+; TIC TAC TOE V1.3
+.MODEL SMALL 
 .STACK 100H
 .DATA
-    ; Bảng trò chơi 3x3 và thông báo
-    BANG       DB '123456789'
+    BANG       DB '123456789'   ; Mảng 3x3 lưu vị trí
     LUOT_X     DB 'Luot X. Nhap vi tri (1-9): $'
     LUOT_O     DB 'Luot O. Nhap vi tri (1-9): $'
     NUOC_LOI   DB 'Nuoc di khong hop le! Thu lai.$'
@@ -12,17 +12,18 @@
     CHOI_LAI   DB 'Choi lai? (Y/N): $'
     NGUOI_CHOI DB 'X'           ; Lượt hiện tại
     XUONG_DONG DB 13, 10, '$'   ; CR+LF
-    DUONG_KE   DB '---+---+---$'
-    NGUOI_THANG DB ' ','$'      ; X, O hoặc D
+    NGUOI_THANG DB ' ','$'      ; Giá trị kết thúc: X, O hoặc D
 
 .CODE
 MAIN PROC
+    ; Khởi tạo dữ liệu và gọi vòng lặp trò chơi
     MOV AX, @DATA
     MOV DS, AX
     CALL KHOI_TAO
     
 VONG_CHOI:
-    CALL HIEN_THI_BANG
+    ; Hiển thị bảng, nhập nước đi, kiểm tra kết thúc
+    CALL IN_BANG
     CALL NHAP_NUOC_DI
     CALL KIEM_TRA_KET_THUC
     CMP  AL, 1
@@ -31,7 +32,8 @@ VONG_CHOI:
     JMP  VONG_CHOI
     
 KET_THUC:            
-    CALL HIEN_THI_BANG
+    ; Hiển thị bảng cuối, thông báo kết quả, hỏi chơi tiếp
+    CALL IN_BANG
     
     MOV  AH, 9
     MOV  AL, NGUOI_THANG
@@ -46,8 +48,7 @@ HIEN_KQ:
     INT  21H
     LEA  DX, XUONG_DONG
     INT  21H
-    INT  21H
-    LEA  DX, CHOI_LAI
+    LEA  DX, CHOI_LAI           ; Hỏi chơi lại
     INT  21H
     MOV  AH, 1
     INT  21H
@@ -61,7 +62,7 @@ THOAT:
     INT  21H
 MAIN ENDP
 
-; Khởi tạo trò chơi
+; Gán lại giá trị ban đầu cho mảng và chọn X đi trước
 KHOI_TAO PROC
     LEA  SI, BANG
     MOV  BL, '1'
@@ -72,82 +73,57 @@ LAP_RESET:
     INC  SI
     LOOP LAP_RESET
     
-    MOV  NGUOI_CHOI, 'X'
+    MOV  NGUOI_CHOI, 'X'        ; Mặc định X đi trước
     RET
 KHOI_TAO ENDP
 
-; Hiển thị bảng
-HIEN_THI_BANG PROC
-    MOV  AH, 0
-    MOV  AL, 3
-    INT  10H
-    
+; Xoá toàn bộ màn hình, thiết lập chế độ
+XOA_MAN_HINH PROC
+    mov ax, 3
+    int 10h
+    ret
+XOA_MAN_HINH ENDP
+
+; In 3 hàng, mỗi hàng 3 ô rồi xuống dòng
+IN_BANG PROC
+    call XOA_MAN_HINH
     LEA  SI, BANG
     XOR  BX, BX
     MOV  CX, 3
-    
-VONG_HANG:           
-    PUSH CX
-    
-    ; Hiển thị hàng với 3 ô
-    MOV  AH, 2
-    MOV  DL, ' '
-    INT  21H
-    
-    CALL HIEN_THI_O              ; Hiển thị ô 1
-    CALL HIEN_PHAN_CACH          ; Phân cách
-    
-    INC  BX                      ; Chuyển sang ô 2
-    CALL HIEN_THI_O
-    CALL HIEN_PHAN_CACH          ; Phân cách
-    
-    INC  BX                      ; Chuyển sang ô 3
-    CALL HIEN_THI_O
-    
-    MOV  AH, 9                   ; Xuống dòng
-    LEA  DX, XUONG_DONG
-    INT  21H
-    
-    POP  CX
-    CMP  CX, 1                   ; Nếu không phải dòng cuối
-    JE   TIEP_HANG
-    
-    LEA  DX, DUONG_KE            ; Hiển thị đường kẻ
-    INT  21H
-    LEA  DX, XUONG_DONG
-    INT  21H
-    
-TIEP_HANG:           
-    INC  BX                      ; Bước tới hàng tiếp theo
-    LOOP VONG_HANG
-    
-    LEA  DX, XUONG_DONG          ; Thêm dòng trống
-    INT  21H
-    
-    RET
+VONG_HANG:
+    push cx
+    mov  cx, 3
+VONG_COT:
+    mov  dl, [SI + BX]
+    mov  ah, 2                  ; In ký tự
+    int  21H
 
-; Hiển thị một ô
-HIEN_THI_O:
-    MOV  DL, [SI + BX]
-    INT  21H
-    RET
+    mov  dl, ' '
+    int  21h
+    inc  BX
+    loop VONG_COT
+    call IN_DONG_MOI
+    pop  cx
+    loop VONG_HANG
+    call IN_DONG_MOI
+    ret
+IN_BANG ENDP
 
-; Hiển thị dấu phân cách
-HIEN_PHAN_CACH:
-    MOV  DL, ' '
-    INT  21H
-    MOV  DL, '|'
-    INT  21H
-    MOV  DL, ' '
-    INT  21H
-    RET
-HIEN_THI_BANG ENDP
+; Thủ tục xuống dòng, trở về đầu dòng
+IN_DONG_MOI PROC
+    mov  dl, 0ah                ; Xuống dòng
+    mov  ah, 2
+    int  21h
+    mov  dl, 13                 ; Về đầu dòng
+    int  21h
+    ret
+IN_DONG_MOI ENDP
 
 ; Lấy nước đi của người chơi
 NHAP_NUOC_DI PROC
     MOV  AH, 9
     LEA  DX, LUOT_X              ; Mặc định là lượt X
-    CMP  NGUOI_CHOI, 'X'
+    CMP  NGUOI_CHOI, 'X'        ; Kiểm tra lượt
     JE   HIEN_NHAC
     LEA  DX, LUOT_O              ; Nếu không phải X thì là O
     
@@ -197,8 +173,8 @@ NHAP_NUOC_DI ENDP
 
 ; Đổi người chơi
 DOI_NGUOI_CHOI PROC
-    MOV  AL, NGUOI_CHOI
-    XOR  AL, ('X' XOR 'O')       ; Đổi X thành O và ngược lại
+    MOV  AL, NGUOI_CHOI         ; Lấy giá trị hiện tại
+    XOR  AL, ('X' XOR 'O')      ; Đổi X <-> O
     MOV  NGUOI_CHOI, AL
     RET
 DOI_NGUOI_CHOI ENDP
