@@ -1,4 +1,4 @@
-; TIC TAC TOE V2.0
+; TIC TAC TOE khac
 .MODEL SMALL
 .DATA
 GMSG  DB  'Tro choi CA RO voi may tinh.',0DH,0AH
