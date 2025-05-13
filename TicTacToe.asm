@@ -1,188 +1,188 @@
-; TIC TAC TOE V1.6
-.MODEL SMALL 
-.STACK 100H
-.DATA
-    BANG       DB '123456789'   ; Ma trận 3x3 dạng 1 chiều
-    HIENTHI    DB 13,10,'  |   |  ',13,10,'---------',13,10,'  |   |  ',13,10
-               DB '---------',13,10,'  |   |  ',13,10,13,10,'$'
-    VITRI      DB 2,6,10,24,28,32,46,50,54    ; Vị trí ký tự trong HIENTHI
-    LUOT_X     DB 'Nhap vi tri (1-9). Luot X: $'
-    LUOT_O     DB 'Nhap vi tri (1-9). Luot O: $'
-    NUOC_SAI   DB ' Khong hop le! Thu lai.',13,10,'$'
-    X_THANG    DB 'NGUOI THANG: X$'
-    O_THANG    DB 'NGUOI THANG: O$'
-    HOA_VAN    DB 'HOA VAN$'
-    CHOI_LAI   DB 'Choi lai? (Y/N): $'
-    LUOT_CHOI  DB 'X'                   ; Lưu X hoặc O
-    LUOT_DAU   DB 'O'                   ; Lưu người chơi đi trước
-    XUONG_DONG DB 13, 10, '$'           ; CR+LF
-    KET_QUA    DB ' ', '$'              ; X, O hoặc D (draw) 
-    BANG_WIN   DW 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7
+; Tic Tac Toe v1.7
+.model small
+.stack 100h
+.data
+    ki_tu db '123456789'   ; kí tự các ô trong bảng
+    screen db 13,10,'  |   |  ',13,10,'---------',13,10,'  |   |  ',13,10
+           db '---------',13,10,'  |   |  ',13,10,13,10,'$'
+    pos db 2,6,10,24,28,32,46,50,54  ; vị trí ký tự trong screen
+    msg_turnX db 'Nhap vi tri (1-9). Luot X: $'
+    msg_turnO db 'Nhap vi tri (1-9). Luot O: $'
+    msg_invalid db ' Khong hop le! Thu lai.', 13, 10, '$'
+    msg_xWin db 'NGUOI THANG: X$'
+    msg_oWin db 'NGUOI THANG: O$'
+    msg_hoa db 'HOA VAN$'
+    msg_replay db 'Choi lai? (Y/N): $'
+    turn db 'X'        ; lưu lượt chơi hiện tại: X hoặc O
+    turn_begin db 'O'         ; lưu người chơi đầu mỗi vòng chơi
+    crlf db 13, 10, '$'      ; xuống dòng
+    res db ' ', '$'      ; đánh dấu kết quả: X, O hoặc H (hòa) 
+    mang_win dw 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7
 
-.CODE
-MAIN PROC
-    MOV  AX, @DATA       ; Khởi tạo DS
-    MOV  DS, AX
-    CALL KHOI_TAO        ; Bắt đầu game mới
+.code
+main proc
+    mov ax, @data       ; khởi tạo
+    mov ds, ax
+    call init        
      
-VONG_CHOI: 
-    CALL IN_BANG         ; Vẽ bảng
-    CALL NHAP_NUOC       ; Nhận input
-    CALL KT_KET_THUC     ; Kiểm tra kết thúc
-    CMP  AL, 1           ; AL=1 nếu có người thắng/hòa
-    JE   KET_THUC      
-    CALL DOI_LUOT        ; Đổi người chơi
-    JMP  VONG_CHOI       ; Lặp lại vòng chơi
+game_loop: 
+    call draw_screen    ; vẽ bảng
+    call nhap_nuoc      ; nhập nước đi       
+    call check_end      ; kiểm tra kết thúc
+    cmp al, 1           ; al=1 nếu có người thắng/hòa
+    je game_over        ; kết thúc nếu al = 1
+    call doi_luot       ; đổi người chơi nếu al = 0
+    jmp game_loop       ; lặp lại vòng chơi
      
-KET_THUC:             
-    CALL IN_BANG         ; Vẽ bảng cuối
-    MOV  AH, 9           ; Int 21h/9
-    MOV  AL, KET_QUA     ; X, O hoặc D
-    LEA  DX, X_THANG     ; Mặc định X thắng
-    CMP  AL, 'X'
-    JE   HIEN_KQ
-    LEA  DX, O_THANG     ; Nếu O thắng
-    CMP  AL, 'O'
-    JE   HIEN_KQ
-    LEA  DX, HOA_VAN     ; Nếu hòa
+game_over:             
+    call draw_screen         
+    mov ah, 9           ; ngắt 9 để in chuỗi
+    mov al, res         ; X, O hoặc H
+    lea dx, msg_xWin    ; mặc định X thắng
+    cmp al, 'X'
+    je hien_kq
+    lea dx, msg_oWin    ; nếu O thắng
+    cmp al, 'O'
+    je hien_kq
+    lea dx, msg_hoa     ; nếu hòa
     
-HIEN_KQ:
-    INT  21H
-    MOV  AH, 9
-    LEA  DX, XUONG_DONG
-    INT  21H
-    LEA  DX, CHOI_LAI
-    INT  21H
-    MOV  AH, 1           ; Đợi nhập phím
-    INT  21H
-    AND  AL, 0DFh        ; Chuyển sang chữ hoa
-    CMP  AL, 'Y'
-    JNE  THOAT
-    CALL KHOI_TAO        ; Reset game
-    JMP  VONG_CHOI
+hien_kq:
+    int 21h             ; in kết quả
+    mov ah, 9           ; in xuống dòng
+    lea dx, crlf
+    int 21h
+    lea dx, msg_replay  ; in hỏi chơi lại?
+    int 21h
+    mov ah, 1           ; ngắt 1 để nhập kí tự
+    int 21h
+    and al, 0dfh        ; chuyển sang chữ hoa
+    cmp al, 'Y'
+    jne exit
+    call init           ; reset game
+    jmp game_loop
     
-THOAT:
-    MOV  AH, 4Ch         ; Thoát chương trình
-    INT  21H
-MAIN ENDP
+exit:
+    mov ah, 4ch         ; thoát chương trình
+    int 21h
+main endp
 
-KHOI_TAO PROC
-    LEA  SI, BANG        ; Trỏ đến bảng
-    MOV  BL, '1'         ; Bắt đầu từ ký tự '1'
-    MOV  CX, 9           ; 9 ô cần khởi tạo
-LAP_RESET:          
-    MOV  [SI], BL        ; Đánh số ô
-    INC  BL
-    INC  SI
-    LOOP LAP_RESET
-    MOV  AL, 'X' + 'O'   ; Tổng = 167 
-    SUB  AL, LUOT_DAU    ; Hoán đổi X<->O
-    MOV  LUOT_DAU, AL    ; Cập nhật người đi trước
-    MOV  LUOT_CHOI, AL   ; Đặt lượt chơi hiện tại
-    RET
-KHOI_TAO ENDP
+init proc
+    lea si, ki_tu       ; trỏ đến bảng
+    mov bl, '1'         ; bắt đầu từ ký tự '1'
+    mov cx, 9           ; 9 ô cần khởi tạo
+reset:          
+    mov [si], bl        ; đánh số ô
+    inc bl
+    inc si
+    loop reset
+    mov al, 'X'+'O'     ; tổng = 167 
+    sub al, turn_begin  ; hoán đổi X<->O
+    mov turn_begin, al  ; cập nhật người đi trước
+    mov turn, al        ; đặt lượt chơi hiện tại
+    ret
+init endp
 
-IN_BANG PROC
-    MOV  AX, 3           ; Xóa màn hình
-    INT  10H
-    MOV  CX, 9           ; 9 ô cần cập nhật
-    XOR  SI, SI          ; SI = 0
-LAP_IN:
-    MOV  AL, VITRI[SI]   ; Vị trí cần cập nhật
-    CBW                  ; Chuyển AL thành AX
-    MOV  DI, AX
-    MOV  AL, BANG[SI]    ; Lấy ký tự từ bảng
-    MOV  HIENTHI[DI], AL ; Cập nhật vào chuỗi hiển thị
-    INC  SI
-    LOOP LAP_IN
-    LEA  DX, HIENTHI
-    MOV  AH, 9           ; In bảng
-    INT  21H
-    RET
-IN_BANG ENDP
+draw_screen proc
+    mov ax, 3           ; xóa màn hình
+    int 10h
+    mov cx, 9           ; 9 ô cần cập nhật
+    xor si, si          ; si = 0
+update_cell:
+    mov al, pos[si]     ; vị trí cần cập nhật
+    cbw                 ; chuyển al thành ax
+    mov di, ax
+    mov al, ki_tu[si]   ; lấy ký tự từ bảng
+    mov screen[di], al  ; cập nhật vào chuỗi hiển thị
+    inc si
+    loop update_cell
+    lea dx, screen
+    mov ah, 9           ; in bảng
+    int 21h
+    ret
+draw_screen endp
 
-NHAP_NUOC PROC
-    MOV  AH, 9
-    LEA  DX, LUOT_X      ; Thông báo lượt X
-    CMP  LUOT_CHOI, 'X'
-    JE   HIEN_NHAP
-    LEA  DX, LUOT_O      ; Hoặc lượt O
+nhap_nuoc proc
+    mov ah, 9
+    lea dx, msg_turnX   ; thông báo lượt X
+    cmp turn, 'X'
+    je hien_nhap
+    lea dx, msg_turnO   ; hoặc lượt O
      
-HIEN_NHAP:            
-    INT  21H
-    MOV  AH, 1           ; Nhận input
-    INT  21H
-    CMP  AL, '1'         ; Kiểm tra hợp lệ
-    JL   NHAP_SAI
-    CMP  AL, '9'
-    JG   NHAP_SAI
-    SUB  AL, '1'         ; Chuyển '1'-'9' thành 0-8
-    MOV  BL, AL
-    XOR  BH, BH          ; BX = 0-8
-    LEA  SI, BANG
-    ADD  SI, BX          ; SI = địa chỉ ô được chọn
-    MOV  AL, [SI]
-    CMP  AL, 'X'         ; Kiểm tra ô đã đánh chưa
-    JE   NHAP_SAI
-    CMP  AL, 'O'
-    JE   NHAP_SAI
-    MOV  AL, LUOT_CHOI   ; Đánh dấu X hoặc O
-    MOV  [SI], AL
-    MOV  AH, 9
-    LEA  DX, XUONG_DONG  ; Xuống dòng
-    INT  21H
-    RET
+hien_nhap:            
+    int 21h             ; in msg lượt chơi
+    mov ah, 1           ; nhận input
+    int 21h
+    cmp al, '1'         ; kiểm tra hợp lệ
+    jl nhap_sai
+    cmp al, '9'
+    jg nhap_sai
+    sub al, '1'         ; chuyển '1'-'9' thành 0-8
+    mov bl, al
+    xor bh, bh          ; bx = 0-8
+    lea si, ki_tu
+    add si, bx          ; si = địa chỉ ô được chọn
+    mov al, [si]
+    cmp al, 'X'         ; kiểm tra ô đã đánh chưa
+    je nhap_sai
+    cmp al, 'O'
+    je nhap_sai
+    mov al, turn        ; đánh dấu X hoặc O
+    mov [si], al
+    mov ah, 9
+    lea dx, crlf        ; xuống dòng
+    int 21h
+    ret
     
-NHAP_SAI:            
-    MOV  AH, 9
-    LEA  DX, NUOC_SAI    ; Thông báo nước đi không hợp lệ
-    INT  21H
-    JMP  NHAP_NUOC       ; Nhập lại
-NHAP_NUOC ENDP
+nhap_sai:            
+    mov ah, 9
+    lea dx, msg_invalid ; thông báo nước đi không hợp lệ
+    int 21h 
+    jmp nhap_nuoc       ; nhập lại
+nhap_nuoc endp
 
-DOI_LUOT PROC
-    MOV  AL, 'X' + 'O'   ; Tổng = 167 
-    SUB  AL, LUOT_CHOI   ; Hoán đổi X<->O
-    MOV  LUOT_CHOI, AL
-    RET
-DOI_LUOT ENDP
+doi_luot proc
+    mov al, 'X'+'O'     ; tổng = 167 
+    sub al, turn        ; hoán đổi X<->O
+    mov turn, al
+    ret
+doi_luot endp
 
-KT_KET_THUC PROC
-    XOR  SI, SI          ; SI = 0
-    MOV  CX, 8           ; 8 cách thắng cần kiểm tra
+check_end proc
+    xor si, si          ; si = 0
+    mov cx, 8           ; 8 cách thắng cần kiểm tra
     
-KT_THANG:
-    MOV  BX, BANG_WIN[SI]; Lấy vị trí thứ 1
-    MOV  AH, BANG[BX-1]
-    MOV  BX, BANG_WIN[SI+2]; Lấy vị trí thứ 2
-    CMP  AH, BANG[BX-1]  ; So sánh 1 và 2
-    JNZ  KHONG_THANG
-    MOV  BX, BANG_WIN[SI+4]; Lấy vị trí thứ 3
-    CMP  AH, BANG[BX-1]  ; So sánh 1 và 3
-    JNZ  KHONG_THANG
-    MOV  KET_QUA, AH     ; Lưu người thắng
-    MOV  AL, 1           ; Báo game kết thúc
-    RET
+check_win:
+    mov bx, mang_win[si]    ; lấy vị trí thứ 1
+    mov ah, ki_tu[bx-1]
+    mov bx, mang_win[si+2]  ; lấy vị trí thứ 2
+    cmp ah, ki_tu[bx-1]     ; so sánh 1 và 2
+    jnz khong_win
+    mov bx, mang_win[si+4]  ; lấy vị trí thứ 3
+    cmp ah, ki_tu[bx-1]     ; so sánh 1 và 3
+    jnz khong_win
+    mov res, ah             ; lưu người thắng
+    mov al, 1               ; báo game kết thúc
+    ret
      
-KHONG_THANG: 
-    ADD  SI, 6           ; Chuyển đến bộ 3 ô tiếp theo
-    LOOP KT_THANG
+khong_win: 
+    add si, 6           ; chuyển đến bộ 3 ô tiếp theo
+    loop check_win
 
-    LEA  SI, BANG        ; Kiểm tra hòa
-    MOV  CX, 9
-KT_HOA: 
-    MOV  AL, [SI]        ; Lấy ký tự ô hiện tại
-    CMP  AL, '9'         ; Nếu còn số (chưa đánh)
-    JBE  CHUA_HOA        ; Thì chưa hòa
-    INC  SI
-    LOOP KT_HOA
-    MOV  KET_QUA, 'D'    ; Đánh dấu hòa (Draw)
-    MOV  AL, 1           ; Báo game kết thúc
-    RET
+    lea si, ki_tu       ; kiểm tra hòa
+    mov cx, 9
+check_hoa: 
+    mov al, [si]        ; lấy ký tự ô hiện tại
+    cmp al, '9'         ; nếu còn số (chưa đánh)
+    jbe chua_hoa        ; thì chưa hòa
+    inc si
+    loop check_hoa
+    mov res, 'H'        ; đánh dấu hòa
+    mov al, 1           ; báo game kết thúc
+    ret
      
-CHUA_HOA:
-    XOR  AL, AL          ; AL = 0 (Game chưa kết thúc)
-    RET
-KT_KET_THUC ENDP
+chua_hoa:
+    xor al, al          ; al = 0 (game chưa kết thúc)
+    ret
+check_end endp
 
-END MAIN
+end main
