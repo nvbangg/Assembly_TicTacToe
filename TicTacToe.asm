@@ -1,4 +1,4 @@
-; TIC TAC TOE V1.5
+; TIC TAC TOE V1.6
 .MODEL SMALL 
 .STACK 100H
 .DATA
@@ -14,6 +14,7 @@
     HOA_VAN    DB 'HOA VAN$'
     CHOI_LAI   DB 'Choi lai? (Y/N): $'
     LUOT_CHOI  DB 'X'                   ; Lưu X hoặc O
+    LUOT_DAU   DB 'O'                   ; Lưu người chơi đi trước
     XUONG_DONG DB 13, 10, '$'           ; CR+LF
     KET_QUA    DB ' ', '$'              ; X, O hoặc D (draw) 
     BANG_WIN   DW 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7
@@ -74,26 +75,29 @@ LAP_RESET:
     INC  BL
     INC  SI
     LOOP LAP_RESET
-    MOV  LUOT_CHOI, 'X'  ; X đi trước
+    MOV  AL, 'X' + 'O'   ; Tổng = 167 
+    SUB  AL, LUOT_DAU    ; Hoán đổi X<->O
+    MOV  LUOT_DAU, AL    ; Cập nhật người đi trước
+    MOV  LUOT_CHOI, AL   ; Đặt lượt chơi hiện tại
     RET
 KHOI_TAO ENDP
 
 IN_BANG PROC
-    MOV AX, 3            ; Xóa màn hình
-    INT 10H
-    MOV CX, 9            ; 9 ô cần cập nhật
-    SUB SI, SI           ; SI = 0
+    MOV  AX, 3           ; Xóa màn hình
+    INT  10H
+    MOV  CX, 9           ; 9 ô cần cập nhật
+    XOR  SI, SI          ; SI = 0
 LAP_IN:
-    MOV AL, VITRI[SI]    ; Vị trí cần cập nhật
-    CBW
-    MOV DI, AX
-    MOV AL, BANG[SI]     ; Lấy ký tự từ bảng
-    MOV HIENTHI[DI], AL  ; Cập nhật vào chuỗi hiển thị
-    INC SI
+    MOV  AL, VITRI[SI]   ; Vị trí cần cập nhật
+    CBW                  ; Chuyển AL thành AX
+    MOV  DI, AX
+    MOV  AL, BANG[SI]    ; Lấy ký tự từ bảng
+    MOV  HIENTHI[DI], AL ; Cập nhật vào chuỗi hiển thị
+    INC  SI
     LOOP LAP_IN
-    LEA DX, HIENTHI
-    MOV AH, 9            ; In bảng
-    INT 21H
+    LEA  DX, HIENTHI
+    MOV  AH, 9           ; In bảng
+    INT  21H
     RET
 IN_BANG ENDP
 
@@ -144,40 +148,40 @@ DOI_LUOT PROC
 DOI_LUOT ENDP
 
 KT_KET_THUC PROC
-    SUB SI, SI              ; SI = 0
-    MOV CX, 8               ; 8 cách thắng cần kiểm tra
+    XOR  SI, SI          ; SI = 0
+    MOV  CX, 8           ; 8 cách thắng cần kiểm tra
     
 KT_THANG:
-    MOV BX, BANG_WIN[SI]    ; Lấy vị trí thứ 1
-    MOV AH, BANG[BX-1]
-    MOV BX, BANG_WIN[SI+2]  ; Lấy vị trí thứ 2
-    CMP AH, BANG[BX-1]      ; So sánh 1 và 2
-    JNZ KHONG_THANG
-    MOV BX, BANG_WIN[SI+4]  ; Lấy vị trí thứ 3
-    CMP AH, BANG[BX-1]      ; So sánh 1 và 3
-    JNZ KHONG_THANG
-    MOV KET_QUA, AH         ; Lưu người thắng
-    MOV AL, 1               ; Báo game kết thúc
+    MOV  BX, BANG_WIN[SI]; Lấy vị trí thứ 1
+    MOV  AH, BANG[BX-1]
+    MOV  BX, BANG_WIN[SI+2]; Lấy vị trí thứ 2
+    CMP  AH, BANG[BX-1]  ; So sánh 1 và 2
+    JNZ  KHONG_THANG
+    MOV  BX, BANG_WIN[SI+4]; Lấy vị trí thứ 3
+    CMP  AH, BANG[BX-1]  ; So sánh 1 và 3
+    JNZ  KHONG_THANG
+    MOV  KET_QUA, AH     ; Lưu người thắng
+    MOV  AL, 1           ; Báo game kết thúc
     RET
      
 KHONG_THANG: 
-    ADD SI, 6               ; Chuyển đến bộ 3 ô tiếp theo
+    ADD  SI, 6           ; Chuyển đến bộ 3 ô tiếp theo
     LOOP KT_THANG
 
-    LEA SI, BANG            ; Kiểm tra hòa
-    MOV CX, 9
+    LEA  SI, BANG        ; Kiểm tra hòa
+    MOV  CX, 9
 KT_HOA: 
-    MOV AL, [SI]            ; Lấy ký tự ô hiện tại
-    CMP AL, '9'             ; Nếu còn số (chưa đánh)
-    JBE CHUA_HOA            ; Thì chưa hòa
-    INC SI
+    MOV  AL, [SI]        ; Lấy ký tự ô hiện tại
+    CMP  AL, '9'         ; Nếu còn số (chưa đánh)
+    JBE  CHUA_HOA        ; Thì chưa hòa
+    INC  SI
     LOOP KT_HOA
-    MOV KET_QUA, 'D'        ; Đánh dấu hòa (Draw)
-    MOV AL, 1               ; Báo game kết thúc
+    MOV  KET_QUA, 'D'    ; Đánh dấu hòa (Draw)
+    MOV  AL, 1           ; Báo game kết thúc
     RET
      
 CHUA_HOA:
-    XOR AL, AL              ; AL = 0 (Game chưa kết thúc)
+    XOR  AL, AL          ; AL = 0 (Game chưa kết thúc)
     RET
 KT_KET_THUC ENDP
 
