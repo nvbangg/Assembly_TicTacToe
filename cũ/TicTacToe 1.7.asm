@@ -148,14 +148,14 @@ check_win:
     mov ah, ki_tu[bx-1]     ; lấy ki_tu tại vị trí đó (trừ 1 vì mảng từ 0)
     mov bx, mang_win[si+2]  ; lấy vị trí thứ 2 trong bộ 3 mang_win
     cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 2
-    jnz chua_win            ; nếu khác nhau thì chưa thắng
+    jnz chua_win           ; nếu khác nhau thì chưa thắng
     mov bx, mang_win[si+4]  ; lấy vị trí thứ 3 trong bộ 3 mang_win
     cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 3
-    jnz chua_win            ; nếu khác nhau thì chưa thắng
+    jnz chua_win           ; nếu khác nhau thì chưa thắng
     mov res, ah             ; nếu giống nhau thì lưu người thắng (X/O)
     mov al, 1               ; al=1 báo hiệu game kết thúc
     ret                     
-chua_win:                   ; xử lý khi chưa thắng ở bộ 3 hiện tại
+chua_win:                  ; xử lý khi chưa thắng ở bộ 3 hiện tại
     add si, 6               ; tăng si lên 6 (mỗi bộ 3 chiếm 6 byte)
     loop check_win          ; lặp check_win đến khi cx=0
     lea si, ki_tu           ; si trỏ đến mảng kí tự
