@@ -1,4 +1,3 @@
-; Tic Tac Toe v1.7
 .model small        
 .stack 100h        
 .data               
