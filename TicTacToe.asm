@@ -3,8 +3,8 @@
 .stack 100h        
 .data               
     ki_tu db '123456789'   ; mảng kí tự ô trong bảng (ban đầu là 1-9)
-    bang db 13,10,'  |   |  ',13,10,'---------',13,10,'  |   |  ',13,10, '---------',13,10,'  |   |  ',13,10,13,10,'$'  ; giao diện bảng trên màn hình  
-    pos db 2,6,10,24,28,32,46,50,54  ; vị trí các kí tự ô trong bang để cập nhật
+    bang db 13,10,'   |   |   ',13,10,'-----------',13,10,'   |   |   ',13,10, '-----------',13,10,'   |   |   ',13,10,13,10,'$'  ; giao diện bảng trên màn hình  
+    pos db 3,7,11,29,33,37,55,59,63  ; vị trí các kí tự ô trong bang để cập nhật
     msg_turnX db 'Nhap vi tri (1-9). Luot X: $'  
     msg_turnO db 'Nhap vi tri (1-9). Luot O: $'  
     msg_invalid db ' Khong hop le! Thu lai.', 13, 10, '$'  
