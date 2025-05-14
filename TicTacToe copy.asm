@@ -1,20 +1,20 @@
 .model small        
 .stack 100h        
 .data               
-    ki_tu db '123456789'            ; mảng kí tự trong các ô (ban đầu là 1-9)
-    bang db 13,10,'   |   |   ',13,10,'-----------',13,10,'   |   |   ',13,10, '-----------',13,10,'   |   |   ',13,10,13,10,'$' ; giao diện bảng trên màn hình  
-    pos dw 3,7,11,29,33,37,55,59,63 ; vị trí các 'ki_tu' trong 'bang' để cập nhật
-    msg_turn_x db 'Nhap vi tri (1-9). Luot X: $'  
-    msg_turn_o db 'Nhap vi tri (1-9). Luot O: $'  
-    msg_invalid db '    Khong hop le! Thu lai.', 13, 10, '$'  
+    ki_tu db '123456789'   ; mảng kí tự ô trong bảng (ban đầu là 1-9)
+    bang db 13,10,'               |     |     ',13,10,13,10, '          -----------------',13,10,13,10,'               |     |     ',13,10,13,10, '          -----------------',13,10,13,10,'               |     |     ',13,10,13,10,'$'  ; giao diện bảng trên màn hình  
+    pos dw 3+1+10,7+3+10,11+5+10,29+17+30,33+19+30,37+21+30,55+33+50,59+35+50,63+37+50  ; vị trí các kí tự ô trong bang để cập nhật
+    msg_turnX db 'Nhap vi tri (1-9). Luot X: $'  
+    msg_turnO db 'Nhap vi tri (1-9). Luot O: $'  
+    msg_invalid db ' Khong hop le! Thu lai.', 13, 10, '$'  
     msg_x_win db 'NGUOI THANG: X$'  
     msg_o_win db 'NGUOI THANG: O$'  
     msg_hoa db 'HOA VAN$'          
     msg_replay db 'Choi lai? (Y/N): $'  
-    turn db 'X'         ; lưu lượt chơi hiện tại: X hoặc O
-    turn_begin db 'O'   ; lưu lượt chơi đầu mỗi vòng
+    turn db 'X'         ; biến lưu lượt chơi hiện tại: X hoặc O
+    turn_begin db 'O'   ; biến lưu người chơi đầu mỗi vòng
     crlf db 13, 10, '$'  
-    res db ' ', '$'     ; lưu kết quả: X, O hoặc H (hòa) 
+    res db ' ', '$'     ; biến đánh dấu kết quả: X, O hoặc H (hòa) 
     mang_win dw 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7  ; mảng lưu các bộ 3 vị trí thắng
 
 .code               
@@ -43,8 +43,9 @@ game_over:
     lea dx, msg_hoa     ; sẽ in msg_hoa
 hien_kq:
     int 21h             ; in kết quả
-    lea dx, crlf        ; in xuống dòng
-    int 21h             ; ah vẫn là 9
+    mov ah, 9           ; in xuống dòng
+    lea dx, crlf
+    int 21h
     lea dx, msg_replay  ; in thông báo hỏi chơi lại
     int 21h
     mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
@@ -81,12 +82,11 @@ ve_bang proc
     mov cx, 9           ; cx=9 để lặp 9 lần
     mov si, 0           ; đặt si=0 (bắt đầu từ ô đầu tiên)
 update_cell:            ; vòng lặp cập nhật từng ô
-    mov bx, si          ; sao chép si vào bx
-    add bx, bx          ; nhân bx với 2 bằng cách cộng bx với chính nó (bx = si * 2)
-    mov di, pos[bx]     ; lấy vị trí cần cập nhật trong chuỗi bang và lưu vào di
+    mov ax, pos[si]     ; lấy vị trí cần cập nhật trong chuỗi bang
+    mov di, ax          ; di= vị trí trong chuỗi bang
     mov al, ki_tu[si]   ; lấy ký tự từ mảng bảng
     mov bang[di], al    ; cập nhật ký tự vào chuỗi hiển thị
-    inc si              ; tăng si (chuyển đến ô tiếp theo)
+    add si, 2           ; tăng si lên 2 để sang ô tiếp theo (vì dw dùng 2B)
     loop update_cell    ; lặp update_cell đến khi cx=0
     lea dx, bang        ; in bảng
     mov ah, 9           
@@ -96,10 +96,10 @@ ve_bang endp
 
 nhap_nuoc proc      
     mov ah, 9           ; hàm 9 để in chuỗi
-    lea dx, msg_turn_x   ; giả sử là lượt X
-    cmp turn, 'X'       ; turn='X' thì in msg_turn_x
+    lea dx, msg_turnX   ; giả sử là lượt X
+    cmp turn, 'X'       ; turn='X' thì in msg_turnX
     je hien_nhap        
-    lea dx, msg_turn_o   ; không thì in msg_turn_o
+    lea dx, msg_turnO   ; không thì in msg_turnO
 hien_nhap:              
     int 21h             ; in thông báo lượt chơi
     mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
@@ -154,7 +154,7 @@ check_win:
     mov al, 1               ; al=1 báo hiệu game kết thúc
     ret                     
 chua_win:                   ; xử lý khi chưa thắng ở bộ 3 hiện tại
-    add si, 6               ; tăng si lên 6 (mỗi bộ 3 chiếm 6 byte trong mang_win)
+    add si, 6               ; tăng si lên 6 (mỗi bộ 3 chiếm 6 byte)
     loop check_win          ; lặp check_win đến khi cx=0
     lea si, ki_tu           ; si trỏ đến mảng kí tự
     mov cx, 9               ; cx=9 để lặp 9 lần
