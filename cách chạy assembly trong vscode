@@ -1,2 +1,5 @@
 - cài đặt extension: https://marketplace.visualstudio.com/items/?itemName=xsro.masm-tasm
 - Right Click + Run ASM code
+- tùy chọn mở bằng dosbox cho đẹp:
+	- Tìm Masmtasm.ASM: Emulator
+	- Chọn dosbox
