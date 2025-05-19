@@ -8,7 +8,7 @@
          db        '                                  ', '   |   |   ',13,10  ; row 2
          db        '                                  ', '-----------',13,10  ; sep 2
          db        '                                  ', '   |   |   ',13,10,'$' ; row 3
-    pos dw 36, 40, 44, 130, 134, 138, 224, 228, 232
+    pos dw 37, 41, 45, 131, 135, 139, 225, 229, 233
     ; Các chuỗi thông báo căn giữa màn hình 80 cột (đã có khoảng trắng phía trước)
     msg_turn_x db 13,10, '                            Nhap vi tri (1-9). Luot X: $'
     msg_turn_o db 13,10, '                            Nhap vi tri (1-9). Luot O: $'
