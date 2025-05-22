@@ -4,18 +4,18 @@
     ki_tu db '123456789'            ; mảng kí tự trong các ô (ban đầu là 1-9)
     bang db 13,10, '   |   |   ',13,10, '-----------',13,10, '   |   |   ',13,10, '-----------',13,10, '   |   |   ',13,10,'$' ; giao diện bảng trên màn hình  
     pos dw 3,7,11,29,33,37,55,59,63 ; vị trí các 'ki_tu' trong 'bang' để cập nhật
-    msg_turn db 13,10, 'Nhap vi tri (1-9). Luot X: $'  
+    msg_turn db 13,10, ' Nhap vi tri (1-9). Luot X: $'  
     msg_invalid db '    Khong hop le! Thu lai.$' 
-    msg_win db 13,10, 'NGUOI THANG: X$'  
-    msg_hoa db 13,10, 'HOA VAN$'          
-    msg_replay db 13,10, 'Choi lai? (Y/N): $'  
+    msg_win db 13,10, ' NGUOI THANG: X$'  
+    msg_hoa db 13,10, ' HOA VAN$'          
+    msg_replay db 13,10, ' Choi lai? (Y/N): $'  
     turn db 'X'             ; lưu lượt chơi hiện tại: X hoặc O
     turn_begin db 'O'       ; lưu lượt chơi đầu mỗi vòng 
     res db ' ', '$'         ; lưu kết quả: X, O hoặc H (hòa) 
     mang_win dw 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7  ; mảng lưu các bộ 3 vị trí thắng
     score_x db 0            ; Số ván thắng của X
     score_o db 0            ; Số ván thắng của O
-    msg_score db 13,10, 'Ti so X/O:  - ', '$' ; Chuỗi hiển thị tỉ số 
+    msg_score db 13,10, ' Ti so X/O:  - ', '$' ; Chuỗi hiển thị tỉ số 
 
 .code               
 main proc              
@@ -34,13 +34,11 @@ main proc
         call ve_bang    
         mov ah, 9           ; dùng hàm 9 để in chuỗi
         mov al, res         ; lấy kết quả (X, O hoặc H)
-        cmp al, 'H'         ; Nếu là hòa thì in msg_hoa
-        je in_hoa
-        mov msg_win[15], al ; Cập nhật kí tự trong thông báo thắng
-        lea dx, msg_win     ; Chuẩn bị in thông báo thắng
-        jmp hien_kq
-    in_hoa:
-        lea dx, msg_hoa     ; Chuẩn bị in thông báo hòa
+        lea dx, msg_hoa     ; Mặc định là msg_hoa
+        cmp al, 'H'         ; Nếu không phải hòa thì hiển thị người thắng
+        je hien_kq
+        mov msg_win[16], al ; Cập nhật kí tự trong thông báo thắng
+        lea dx, msg_win     ; Đổi sang thông báo thắng
     hien_kq:
         int 21h             ; in kết quả
         call hien_score     ; in tỉ số
@@ -61,10 +59,10 @@ main endp
 hien_score proc
     mov al, score_x         ; chuyển điểm X thành ký tự
     add al, '0'             
-    mov msg_score[13], al   ; lưu điểm X vào msg_score
+    mov msg_score[14], al   ; lưu điểm X vào msg_score
     mov al, score_o         ; chuyển điểm O thành ký tự
     add al, '0'            
-    mov msg_score[15], al   ; lưu điểm O vào msg_score
+    mov msg_score[16], al   ; lưu điểm O vào msg_score
     mov ah, 9               ; in chuỗi tỉ số
     lea dx, msg_score
     int 21h
@@ -108,9 +106,9 @@ ve_bang endp
 
 nhap_nuoc proc      
     mov ah, 9               ; hàm 9 để in chuỗi
-    lea dx, msg_turn        ; Chuẩn bị in thông báo lượt chơi
     mov al, turn            ; Lấy lượt chơi hiện tại (X hoặc O)
-    mov msg_turn[26], al    ; Cập nhật kí tự trong thông báo
+    mov msg_turn[27], al    ; Cập nhật kí tự trong thông báo
+    lea dx, msg_turn        ; Chuẩn bị in thông báo lượt chơi
     hien_nhap:              
         int 21h             ; in thông báo lượt chơi
         mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
