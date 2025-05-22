@@ -15,12 +15,9 @@
     turn_begin db 'O'       ; lưu lượt chơi đầu mỗi vòng 
     res db ' ', '$'         ; lưu kết quả: X, O hoặc H (hòa) 
     mang_win dw 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7  ; mảng lưu các bộ 3 vị trí thắng
-    score_x db 0            ; Số ván thắng của X
-    score_o db 0            ; Số ván thắng của O
-    msg_score db 13,10, 'Ti so X/O:  - ', '$' ; Chuỗi hiển thị tỉ số 
 
 .code               
-main proc              
+main proc           
     mov ax, @data   
     mov ds, ax      
     call init       
@@ -45,7 +42,6 @@ main proc
         lea dx, msg_hoa     ; sẽ in msg_hoa
     hien_kq:
         int 21h             ; in kết quả
-        call hien_score     ; in tỉ số
         lea dx, msg_replay  ; in thông báo hỏi chơi lại
         int 21h
         mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
@@ -59,19 +55,6 @@ main proc
         mov ah, 4ch         ; hàm 4Ch thoát chương trình
         int 21h
 main endp
-    
-hien_score proc
-    mov al, score_x         ; chuyển điểm X thành ký tự
-    add al, '0'             
-    mov msg_score[13], al   ; lưu điểm X vào msg_score
-    mov al, score_o         ; chuyển điểm O thành ký tự
-    add al, '0'            
-    mov msg_score[15], al   ; lưu điểm O vào msg_score
-    mov ah, 9               ; in chuỗi tỉ số
-    lea dx, msg_score
-    int 21h
-    ret
-hien_score endp
 
 init proc           
     lea si, ki_tu           ; si trỏ đến mảng kí tự
@@ -162,24 +145,13 @@ check_end proc
         cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 3
         jnz chua_win            ; nếu khác nhau thì chưa thắng
         mov res, ah             ; nếu giống nhau thì lưu người thắng (X/O)
-        cmp ah, 'X'             ; nếu X thắng
-        je inc_score_x
-        cmp ah, 'O'             ; nếu O thắng
-        je inc_score_o
-    inc_score_x:
-        inc score_x
-        jmp end_check_win
-    inc_score_o:
-        inc score_o
-        jmp end_check_win
-    end_check_win:
-        mov al, 1               ; al = 1 báo hiệu game kết thúc
-        ret                              
+        mov al, 1               ; al=1 báo hiệu game kết thúc
+        ret                     
     chua_win:                   ; xử lý khi chưa thắng ở bộ 3 hiện tại
         add si, 6               ; tăng si lên 6 (mỗi bộ 3 chiếm 6 byte trong mang_win)
         loop check_win          ; lặp check_win đến khi cx=0
-        lea si, ki_tu               ; si trỏ đến mảng kí tự
-        mov cx, 9                   ; cx=9 để lặp 9 lần
+    lea si, ki_tu               ; si trỏ đến mảng kí tự
+    mov cx, 9                   ; cx=9 để lặp 9 lần
     check_hoa:                  
         mov al, [si]            ; lấy giá trị ô hiện tại
         cmp al, '9'             
