@@ -18,7 +18,7 @@
     score_x db 0            ; Số ván thắng của X
     score_o db 0            ; Số ván thắng của O
     msg_score db 13,10, 'Ti so: X:  - O:  ', '$' ; Chuỗi hiển thị tỉ số 
-    max_game db 2           ; số ván chơi tối đa là 2 
+    max_game db 5           ; số ván chơi tối đa là 2 
     game_count db 0         ; đếm số ván đã chơichơi
     msg_reset_tiso db 13,10, 'Da choi het ', '$'
     msg_so_van db '2', ' ', 'van. Reset ti so ve 0 - 0.', 13,10, '$'
