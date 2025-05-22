@@ -4,9 +4,11 @@
     ki_tu db '123456789'            ; mảng kí tự trong các ô (ban đầu là 1-9)
     bang db 13,10, '   |   |   ',13,10, '-----------',13,10, '   |   |   ',13,10, '-----------',13,10, '   |   |   ',13,10,'$' ; giao diện bảng trên màn hình  
     pos dw 3,7,11,29,33,37,55,59,63 ; vị trí các 'ki_tu' trong 'bang' để cập nhật
-    msg_turn db 13,10, 'Nhap vi tri (1-9). Luot X: $'  
+    msg_turn_x db 13,10, 'Nhap vi tri (1-9). Luot X: $'  
+    msg_turn_o db 13,10, 'Nhap vi tri (1-9). Luot O: $'  
     msg_invalid db '    Khong hop le! Thu lai.$' 
-    msg_win db 13,10, 'NGUOI THANG: X$'  
+    msg_x_win db 13,10, 'NGUOI THANG: X$'  
+    msg_o_win db 13,10, 'NGUOI THANG: O$'  
     msg_hoa db 13,10, 'HOA VAN$'          
     msg_replay db 13,10, 'Choi lai? (Y/N): $'  
     turn db 'X'             ; lưu lượt chơi hiện tại: X hoặc O
@@ -34,13 +36,13 @@ main proc
         call ve_bang    
         mov ah, 9           ; dùng hàm 9 để in chuỗi
         mov al, res         ; lấy kết quả (X, O hoặc H)
-        cmp al, 'H'         ; Nếu là hòa thì in msg_hoa
-        je in_hoa
-        mov msg_win[15], al ; Cập nhật kí tự trong thông báo thắng
-        lea dx, msg_win     ; Chuẩn bị in thông báo thắng
-        jmp hien_kq
-    in_hoa:
-        lea dx, msg_hoa     ; Chuẩn bị in thông báo hòa
+        lea dx, msg_x_win    
+        cmp al, 'X'         ; al=X thì sẽ in msg_x_win
+        je hien_kq          
+        lea dx, msg_o_win    
+        cmp al, 'O'         ; al=O thì sẽ in msg_o_win
+        je hien_kq          
+        lea dx, msg_hoa     ; sẽ in msg_hoa
     hien_kq:
         int 21h             ; in kết quả
         call hien_score     ; in tỉ số
@@ -108,9 +110,10 @@ ve_bang endp
 
 nhap_nuoc proc      
     mov ah, 9               ; hàm 9 để in chuỗi
-    lea dx, msg_turn        ; Chuẩn bị in thông báo lượt chơi
-    mov al, turn            ; Lấy lượt chơi hiện tại (X hoặc O)
-    mov msg_turn[26], al    ; Cập nhật kí tự trong thông báo
+    lea dx, msg_turn_x      ; giả sử là lượt X
+    cmp turn, 'X'           ; turn='X' thì in msg_turn_x
+    je hien_nhap        
+    lea dx, msg_turn_o      ; không thì in msg_turn_o
     hien_nhap:              
         int 21h             ; in thông báo lượt chơi
         mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
