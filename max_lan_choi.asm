@@ -227,4 +227,4 @@ check_end proc
         mov al, 0               ; al=0 (game chưa kết thúc)
         ret                     
 check_end endp
-end main 
+end main
