@@ -23,6 +23,7 @@
     msg_x_chungcuoc db 13,10, '==> X THANG CHUNG CUOC!$',13,10
     msg_o_chungcuoc db 13,10, '==> O THANG CHUNG CUOC!$',13,10
     msg_hoa_chungcuoc db 13,10, '==> HOA CHUNG CUOC!$',13,10
+
 .code               
 main proc              
     mov ax, @data   
@@ -227,4 +228,4 @@ check_end proc
         mov al, 0               ; al=0 (game chưa kết thúc)
         ret                     
 check_end endp
-end main
+end main 

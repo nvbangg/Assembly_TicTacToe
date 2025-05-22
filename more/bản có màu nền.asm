@@ -1,11 +1,5 @@
 .model small        
 .stack 100h        
-print macro string
-    mov ah, 9
-    lea dx, string
-    int 21h
-endm
-
 .data               
     ki_tu db '123456789'            ; mảng kí tự trong các ô (ban đầu là 1-9)
     bang db 13,10, '   |   |   ',13,10, '-----------',13,10, '   |   |   ',13,10, '-----------',13,10, '   |   |   ',13,10,'$' ; giao diện bảng trên màn hình  
@@ -19,9 +13,9 @@ endm
     turn_begin db 'O'       ; lưu lượt chơi đầu mỗi vòng 
     res db ' ', '$'         ; lưu kết quả: X, O hoặc H (hòa) 
     mang_win dw 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7  ; mảng lưu các bộ 3 vị trí thắng
-    score_x db 0            ; số ván thắng của X
-    score_o db 0            ; số ván thắng của O
-    msg_score db 13,10, ' Ti so X-O:  - ', '$' 
+    score_x db 0            ; Số ván thắng của X
+    score_o db 0            ; Số ván thắng của O
+    msg_score db 13,10, ' Ti so X/O:  - ', '$' ; Chuỗi hiển thị tỉ số 
 
 .code               
 main proc              
@@ -37,19 +31,21 @@ main proc
         call doi_luot       
         jmp game_loop     
     game_over:          
-        call ve_bang        ; sau lệnh ah vẫn = 9
+        call ve_bang    
+        mov ah, 9           ; dùng hàm 9 để in chuỗi
         mov al, res         ; lấy kết quả (X, O hoặc H)
-        lea dx, msg_hoa     ; mặc định là msg_hoa
-        cmp al, 'H'         
+        lea dx, msg_hoa     ; Mặc định là msg_hoa
+        cmp al, 'H'         ; Nếu không phải hòa thì hiển thị người thắng
         je hien_kq
-        mov msg_win[16], al ; cập nhật người thắng
-        lea dx, msg_win     ; đổi sang thông báo thắng
+        mov msg_win[16], al ; Cập nhật kí tự trong thông báo thắng
+        lea dx, msg_win     ; Đổi sang thông báo thắng
     hien_kq:
         int 21h             ; in kết quả
         call hien_score     ; in tỉ số
-        print msg_replay    
-        mov ah, 1           ; nhập ký tự bằng hàm 1
+        lea dx, msg_replay  ; in thông báo hỏi chơi lại
         int 21h
+        mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
+        int 21h             
         and al, 0dfh        ; chuyển ký tự thành chữ hoa
         cmp al, 'Y'         
         jne exit            ; al=Y thì exit
@@ -61,20 +57,22 @@ main proc
 main endp
     
 hien_score proc
-    mov al, score_x         ; chuyển điểm X thành ký tự và cập nhật
+    mov al, score_x         ; chuyển điểm X thành ký tự
     add al, '0'             
-    mov msg_score[14], al   
-    mov al, score_o         ; chuyển điểm O thành ký tự và cập nhật
+    mov msg_score[14], al   ; lưu điểm X vào msg_score
+    mov al, score_o         ; chuyển điểm O thành ký tự
     add al, '0'            
-    mov msg_score[16], al   
-    print msg_score         ; in tỉ số
+    mov msg_score[16], al   ; lưu điểm O vào msg_score
+    mov ah, 9               ; in chuỗi tỉ số
+    lea dx, msg_score
+    int 21h
     ret
 hien_score endp
 
 init proc           
-    lea si, ki_tu           ; si trỏ đến ki_tu
+    lea si, ki_tu           ; si trỏ đến mảng kí tự
     mov bl, '1'             ; bl bắt đầu từ ký tự '1'
-    mov cx, 9               ; lặp 9 lần khởi tạo ki_tu từ '1' đến '9'
+    mov cx, 9               ; cx=9 để lặp 9 lần
     reset:                  
         mov [si], bl        ; gán giá trị bl vào ô hiện tại
         inc bl              ; tăng bl lên 1
@@ -88,38 +86,42 @@ init proc
 init endp
 
 ve_bang proc 
-    mov ax, 0600h           ; ah=06h (lệnh cuộn màn hình), al=00h (cuộn toàn màn hình)
-    mov bh, 17h             ; 1 (màu xanh) cho nền, 7 (màu trắng) cho chữ
-    mov cx, 0000h           ; tọa độ góc trên bên trái (0,0)
-    mov dx, 184Fh           ; tọa độ góc dưới bên phải (24,79) 
-    int 10h                 ; gọi ngắt 10h để xóa màn hình với màu đã cài đặt
+    mov ax, 0600h   ; AH=06h (cuộn lên), AL=00h (toàn màn hình)
+    mov bh, 17h     ; Thuộc tính màu: 1 (xanh) cho nền, 7 (trắng) cho chữ
+    mov cx, 0000h   ; Góc trên bên trái (0,0)
+    mov dx, 184Fh   ; Góc dưới bên phải (24,79)
+    int 10h         ; Gọi ngắt để xóa màn hình với màu đặt trước
     
-    mov ah, 02h             ; chuyển sang lệnh đặt vị trí con trỏ
-    mov bh, 0               ; chọn trang màn hình 0 (trang hiển thị)
-    mov dx, 0000h           ; đặt con trỏ về vị trí (0,0)
-    int 10h                 ; gọi ngắt 10h để di chuyển con trỏ
+    mov ah, 02h     ; Đặt vị trí con trỏ
+    mov bh, 0       ; Trang 0
+    mov dx, 0000h   ; Tọa độ (0,0)
+    int 10h
     
-    mov cx, 9               ; lặp 9 lần để cập nhật 9 ô với giá trị từ ki_tu
+    mov cx, 9               ; cx=9 để lặp 9 lần
     mov si, 0               ; đặt si=0 (bắt đầu từ ô đầu tiên)
-    update_cell:            
+    update_cell:            ; vòng lặp cập nhật từng ô
         mov bx, si          ; bx=si*2 (vì pos lưu dạng dw cần 2B)
         add bx, bx          
         mov di, pos[bx]     ; lấy vị trí cần cập nhật trong chuỗi bang và lưu vào di
         mov al, ki_tu[si]   ; lấy ký tự từ mảng bảng
         mov bang[di], al    ; cập nhật ký tự vào chuỗi hiển thị
         inc si              ; tăng si (chuyển đến ô tiếp theo)
-        loop update_cell    
-    print bang
+        loop update_cell    ; lặp update_cell đến khi cx=0
+    mov ah, 9           
+    lea dx, bang            ; in bảng
+    int 21h             
     ret                 
 ve_bang endp
 
 nhap_nuoc proc      
-    mov al, turn            ; lấy lượt chơi hiện tại (X hoặc O)
-    mov msg_turn[27], al    ; cập nhật kí tự trong thông báo
+    mov ah, 9               ; hàm 9 để in chuỗi
+    mov al, turn            ; Lấy lượt chơi hiện tại (X hoặc O)
+    mov msg_turn[27], al    ; Cập nhật kí tự trong thông báo
+    lea dx, msg_turn        ; Chuẩn bị in thông báo lượt chơi
     hien_nhap:              
-        print msg_turn
-        mov ah, 1           ; hàm 1 để nhập ký tự
-        int 21h
+        int 21h             ; in thông báo lượt chơi
+        mov ah, 1           ; hàm 1 để nhập ký tự (lưu trong al)
+        int 21h             
         cmp al, '1'         
         jl nhap_sai         ; nếu nhỏ hơn '1' thì nhập sai
         cmp al, '9'         
@@ -138,7 +140,9 @@ nhap_nuoc proc
         mov [si], al        ; đánh dấu X hoặc O vào ô
         ret                 
     nhap_sai:               
-        print msg_invalid
+        mov ah, 9           ; hàm 9 để in chuỗi
+        lea dx, msg_invalid ; in thông báo nước đi không hợp lệ
+        int 21h 
         jmp nhap_nuoc       ; quay lại nhập lại
 nhap_nuoc endp
 
@@ -151,7 +155,7 @@ doi_luot endp
 
 check_end proc      
     mov si, 0                   ; si=0 để bắt đầu từ ô đầu tiên
-    mov cx, 8                   ; lặp 8 lần để kiểm tra 8 bộ 3 vị trí thắng
+    mov cx, 8                   ; cx=8 để lặp 8 lần
     check_win:                  
         mov bx, mang_win[si]    ; lấy vị trí thứ 1 trong bộ 3 mang_win
         mov ah, ki_tu[bx-1]     ; lấy ki_tu tại vị trí đó (trừ 1 vì mảng từ 0)
@@ -162,29 +166,33 @@ check_end proc
         cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 3
         jnz chua_win            ; nếu khác nhau thì chưa thắng
         mov res, ah             ; nếu giống nhau thì lưu người thắng (X/O)
-        sub ah, 'X'             ; nếu X thắng thì ah=0, O thắng thì ah=1
-        jz inc_score_x          ; nếu ah=0 (X thắng) thì tăng điểm X
-        inc score_o             ; ngược lại tăng điểm O
-        jmp end_check_win
+        cmp ah, 'X'             ; nếu X thắng
+        je inc_score_x
+        cmp ah, 'O'             ; nếu O thắng
+        je inc_score_o
     inc_score_x:
         inc score_x
+        jmp end_check_win
+    inc_score_o:
+        inc score_o
+        jmp end_check_win
     end_check_win:
         mov al, 1               ; al = 1 báo hiệu game kết thúc
         ret                              
     chua_win:                   ; xử lý khi chưa thắng ở bộ 3 hiện tại
         add si, 6               ; tăng si lên 6 (mỗi bộ 3 chiếm 6 byte trong mang_win)
         loop check_win          ; lặp check_win đến khi cx=0
-    lea si, ki_tu               ; si trỏ đến mảng kí tự
-    mov cx, 9                   ; cx=9 để lặp 9 lần
+        lea si, ki_tu               ; si trỏ đến mảng kí tự
+        mov cx, 9                   ; cx=9 để lặp 9 lần
     check_hoa:                  
         mov al, [si]            ; lấy giá trị ô hiện tại
         cmp al, '9'             
         jbe chua_hoa            ; nếu <= '9' thì còn ô chưa đánh -> chưa hòa
         inc si                  ; tăng si (kiểm tra ô tiếp)
         loop check_hoa          ; lặp check_hoa đến khi cx=0
-    mov res, 'H'                ; nếu tất cả ô đều đã đánh thì đánh dấu hòa
-    mov al, 1                   ; al=1 báo hiệu game kết thúc
-    ret                     
+        mov res, 'H'            ; nếu tất cả ô đều đã đánh thì đánh dấu hòa
+        mov al, 1               ; al=1 báo hiệu game kết thúc
+        ret                     
     chua_hoa:                   ; xử lý khi chưa hòa
         mov al, 0               ; al=0 (game chưa kết thúc)
         ret                     
