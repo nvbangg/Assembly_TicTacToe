@@ -57,35 +57,25 @@ main proc
     exit:
         mov ah, 4ch         ; hàm 4Ch thoát chương trình
         int 21h
-    main endp
+main endp
     
-    hien_thi_ti_so proc
-        ; Chuyển đổi score_x thành chuỗi
-        mov ax, score_x             ; Lấy điểm của X
-        lea di, msg_score + 11      ; Vị trí để chèn số điểm X (sau 'Ti so: X: ')
-        call num_to_string          ; Chuyển số thành chuỗi
+hien_thi_ti_so proc
+    ; Chuyển score_x thành ký tự
+    mov ax, score_x         ; Lấy điểm của X
+    add al, '0'             ; Chuyển số thành ký tự (0-9)
+    mov msg_score[11], al   ; Lưu vào vị trí điểm X trong msg_score
 
-        ; Chuyển đổi score_o thành chuỗi
-        mov ax, score_o             ; Lấy điểm của O
-        lea di, msg_score + 17      ; Vị trí để chèn số điểm O (sau ' - O: ')
-        call num_to_string          ; Chuyển số thành chuỗi
+    ; Chuyển score_o thành ký tự
+    mov ax, score_o         ; Lấy điểm của O
+    add al, '0'             ; Chuyển số thành ký tự (0-9)
+    mov msg_score[17], al   ; Lưu vào vị trí điểm O trong msg_score
 
-        ; In chuỗi tỉ số
-        mov ah, 9
-        lea dx, msg_score
-        int 21h
-        ret
-    hien_thi_ti_so endp
-
-    num_to_string proc
-        ; Chuyển số trong AX thành chuỗi, chỉ lấy 1 chữ số cuối cùng
-        mov bx, 10                  ; Cơ số 10
-        xor dx, dx                  ; Xóa DX để chia
-        div bx                      ; AX / 10, thương trong AX, dư trong DX
-        add dl, '0'                 ; Chuyển dư thành ký tự (chữ số cuối cùng)
-        mov [di], dl                ; Lưu ký tự vào msg_score
-        ret
-    num_to_string endp
+    ; In chuỗi tỉ số
+    mov ah, 9
+    lea dx, msg_score
+    int 21h
+    ret
+hien_thi_ti_so endp
 
     
 
