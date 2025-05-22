@@ -15,8 +15,8 @@
     turn_begin db 'O'       ; lưu lượt chơi đầu mỗi vòng 
     res db ' ', '$'         ; lưu kết quả: X, O hoặc H (hòa) 
     mang_win dw 1,2,3, 4,5,6, 7,8,9, 1,4,7, 2,5,8, 3,6,9, 1,5,9, 3,5,7  ; mảng lưu các bộ 3 vị trí thắng
-    score_x dw 0            ; Số ván thắng của X
-    score_o dw 0            ; Số ván thắng của O
+    score_x db 0            ; Số ván thắng của X
+    score_o db 0            ; Số ván thắng của O
     msg_score db 13,10, 'Ti so: X:  - O:  ', '$' ; Chuỗi hiển thị tỉ số 
 .code               
 main proc              
@@ -61,12 +61,12 @@ main endp
     
 hien_thi_ti_so proc
     ; Chuyển score_x thành ký tự
-    mov ax, score_x         ; Lấy điểm của X
+    mov al, score_x         ; Lấy điểm của X
     add al, '0'             ; Chuyển số thành ký tự (0-9)
     mov msg_score[11], al   ; Lưu vào vị trí điểm X trong msg_score
 
     ; Chuyển score_o thành ký tự
-    mov ax, score_o         ; Lấy điểm của O
+    mov al, score_o         ; Lấy điểm của O
     add al, '0'             ; Chuyển số thành ký tự (0-9)
     mov msg_score[17], al   ; Lưu vào vị trí điểm O trong msg_score
 
