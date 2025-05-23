@@ -22,13 +22,12 @@ endm
     score_x db 0            ; số ván thắng của X
     score_o db 0            ; số ván thắng của O
     msg_score db 13,10, ' Ti so X-O:  - ', '$' 
-    max_game db 3           ; số ván chơi tối đa là 3
+    max_game db 3           ; số ván chơi tối đa là 3 
     game_count db 0         ; đếm số ván đã chơi
-    msg_reset_tiso db 13,10, 'Da choi het ', '$' ; thông báo đã chơi hết số ván tối đa
-    msg_so_van db '3', ' ', 'van. Reset ti so ve 0 - 0.', 13,10, '$'
-    msg_x_chungcuoc db 13,10, '==> X THANG CHUNG CUOC!$',13,10
-    msg_o_chungcuoc db 13,10, '==> O THANG CHUNG CUOC!$',13,10
-    msg_hoa_chungcuoc db 13,10, '==> HOA CHUNG CUOC!$',13,10
+    msg_reset db 13,10, 'Da choi het 3 van. Reset ti so ve 0 - 0.', 13,10, '$'
+    msg_x_chungcuoc db 13,10, '==> X THANG CHUNG CUOC!$'
+    msg_o_chungcuoc db 13,10, '==> O THANG CHUNG CUOC!$'
+    msg_hoa_chungcuoc db 13,10, '==> HOA CHUNG CUOC!$'
 
 .code               
 main proc              
@@ -52,32 +51,30 @@ main proc
         mov msg_win[16], al ; cập nhật người thắng
         lea dx, msg_win     ; đổi sang thông báo thắng
     hien_kq:
-        print dx            ; in kết quả
+        int 21h             ; in kết quả
         call hien_score     ; in tỉ số
         inc game_count      ; tăng số ván đã chơi lên 1
         mov al, game_count
         cmp al, max_game
         jne tiep_tuc_choi
 
+        ; Kiểm tra kết quả chung cuộc
         mov al, score_x
         cmp al, score_o     ; so sánh số ván thắng của x với số ván thắng của o
         ja x_chung_cuoc     ; nếu lớn hơn nhảy tới x_chung_cuoc 
         jb o_chung_cuoc     ; nếu nhỏ hơn nhảy tới o_chung_cuoc
         print msg_hoa_chungcuoc   ; bằng thì in ra hòa chung cuộc
-        jmp reset_score
-
+        jmp reset_ti_so
     x_chung_cuoc:
         print msg_x_chungcuoc
-        jmp reset_score
-
+        jmp reset_ti_so
     o_chung_cuoc:
         print msg_o_chungcuoc
 
-    reset_score:
-        print msg_reset_tiso
-        print msg_so_van
+    reset_ti_so:
+        print msg_reset
         mov score_x, 0       ; reset tỉ số của x về 0
-        mov score_o, 0       ; reset tỉ số của y về 0
+        mov score_o, 0       ; reset tỉ số của o về 0
         mov game_count, 0    ; reset số ván game đã chơi về 0
 
     tiep_tuc_choi:
@@ -88,7 +85,7 @@ main proc
         cmp al, 'Y'         
         jne exit            ; al=Y thì exit
         call init           ; al!=Y thì reset game
-        jmp game_loop       
+        jmp game_loop
     exit:
         mov ah, 4ch         ; hàm 4Ch thoát chương trình
         int 21h
@@ -196,16 +193,12 @@ check_end proc
         cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 3
         jnz chua_win            ; nếu khác nhau thì chưa thắng
         mov res, ah             ; nếu giống nhau thì lưu người thắng (X/O)
-        cmp ah, 'X'             ; nếu X thắng
-        je inc_score_x
-        cmp ah, 'O'             ; nếu O thắng
-        je inc_score_o
+        sub ah, 'X'             ; nếu X thắng thì ah=0, O thắng thì ah!=0
+        jz inc_score_x          ; nếu ah=0 (X thắng) thì tăng điểm X
+        inc score_o             ; ngược lại tăng điểm O
+        jmp end_check_win
     inc_score_x:
         inc score_x
-        jmp end_check_win
-    inc_score_o:
-        inc score_o
-        jmp end_check_win
     end_check_win:
         mov al, 1               ; al = 1 báo hiệu game kết thúc
         ret                              
