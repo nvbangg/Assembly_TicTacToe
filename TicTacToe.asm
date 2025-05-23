@@ -89,7 +89,7 @@ init endp
 
 ve_bang proc 
     mov ax, 0600h           ; ah=06h (lệnh cuộn màn hình), al=00h (cuộn toàn màn hình)
-    mov bh, 17h             ; 1 (màu xanh) cho nền, 7 (màu trắng) cho chữ
+    mov bh, 70h             ; 7 (màu trắng) cho nền, 0 (màu đen) cho chữ
     mov cx, 0000h           ; tọa độ góc trên bên trái (0,0)
     mov dx, 184Fh           ; tọa độ góc dưới bên phải (24,79) 
     int 10h                 ; gọi ngắt 10h để xóa màn hình với màu đã cài đặt
@@ -162,7 +162,7 @@ check_end proc
         cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 3
         jnz chua_win            ; nếu khác nhau thì chưa thắng
         mov res, ah             ; nếu giống nhau thì lưu người thắng (X/O)
-        sub ah, 'X'             ; nếu X thắng thì ah=0, O thắng thì ah=1
+        sub ah, 'X'             ; nếu X thắng thì ah=0, O thắng thì ah!=0
         jz inc_score_x          ; nếu ah=0 (X thắng) thì tăng điểm X
         inc score_o             ; ngược lại tăng điểm O
         jmp end_check_win
