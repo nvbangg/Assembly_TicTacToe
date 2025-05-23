@@ -22,6 +22,12 @@ endm
     score_x db 0            ; số ván thắng của X
     score_o db 0            ; số ván thắng của O
     msg_score db 13,10, ' Ti so X-O:  - ', '$' 
+    max_game db 3           ; số ván chơi tối đa là 3 
+    game_count db 0         ; đếm số ván đã chơi
+    msg_reset db 13,10, ' Da choi het 3 van. Reset ti so ve 0 - 0.', 13,10, '$'
+    msg_x_chungcuoc db 13,10, ' ==> X THANG CHUNG CUOC!$'
+    msg_o_chungcuoc db 13,10, ' ==> O THANG CHUNG CUOC!$'
+    msg_hoa_chungcuoc db 13,10, ' ==> HOA CHUNG CUOC!$'
 
 .code               
 main proc              
@@ -47,6 +53,30 @@ main proc
     hien_kq:
         int 21h             ; in kết quả
         call hien_score     ; in tỉ số
+        inc game_count      ; tăng số ván đã chơi lên 1
+        mov al, game_count
+        cmp al, max_game
+        jne tiep_tuc_choi
+
+        mov al, score_x
+        cmp al, score_o     ; so sánh số ván thắng của x với số ván thắng của o
+        jg x_chung_cuoc     ; nếu lớn hơn nhảy tới x_chung_cuoc 
+        jl o_chung_cuoc     ; nếu nhỏ hơn nhảy tới o_chung_cuoc
+        print msg_hoa_chungcuoc   ; bằng thì in ra hòa chung cuộc
+        jmp reset_ti_so
+    x_chung_cuoc:
+        print msg_x_chungcuoc
+        jmp reset_ti_so
+    o_chung_cuoc:
+        print msg_o_chungcuoc
+
+    reset_ti_so:
+        print msg_reset
+        mov score_x, 0       ; reset tỉ số của x về 0
+        mov score_o, 0       ; reset tỉ số của o về 0
+        mov game_count, 0    ; reset số ván game đã chơi về 0
+
+    tiep_tuc_choi:
         print msg_replay    
         mov ah, 1           ; nhập ký tự bằng hàm 1
         int 21h
@@ -54,7 +84,7 @@ main proc
         cmp al, 'Y'         
         jne exit            ; al=Y thì exit
         call init           ; al!=Y thì reset game
-        jmp game_loop       
+        jmp game_loop
     exit:
         mov ah, 4ch         ; hàm 4Ch thoát chương trình
         int 21h
@@ -157,13 +187,13 @@ check_end proc
         mov ah, ki_tu[bx-1]     ; lấy ki_tu tại vị trí đó (trừ 1 vì mảng từ 0)
         mov bx, mang_win[si+2]  ; lấy vị trí thứ 2 trong bộ 3 mang_win
         cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 2
-        jnz chua_win            ; nếu khác nhau thì chưa thắng
+        jne chua_win            ; nếu khác nhau thì chưa thắng
         mov bx, mang_win[si+4]  ; lấy vị trí thứ 3 trong bộ 3 mang_win
         cmp ah, ki_tu[bx-1]     ; so sánh ki_tu tại vị trí 1 và 3
-        jnz chua_win            ; nếu khác nhau thì chưa thắng
+        jne chua_win            ; nếu khác nhau thì chưa thắng
         mov res, ah             ; nếu giống nhau thì lưu người thắng (X/O)
         sub ah, 'X'             ; nếu X thắng thì ah=0, O thắng thì ah!=0
-        jz inc_score_x          ; nếu ah=0 (X thắng) thì tăng điểm X
+        je inc_score_x          ; nếu ah=0 (X thắng) thì tăng điểm X
         inc score_o             ; ngược lại tăng điểm O
         jmp end_check_win
     inc_score_x:
