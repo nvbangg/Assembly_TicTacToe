@@ -41,7 +41,8 @@ main proc
         cmp al, 1           ; kiểm tra al=1 (có người thắng/hòa)
         je game_over        
         call doi_luot       
-        jmp game_loop     
+        jmp game_loop    
+         
     game_over:          
         call ve_bang        ; sau lệnh ah vẫn = 9
         mov al, res         ; lấy kết quả (X, O hoặc H)
@@ -72,10 +73,9 @@ main proc
 
     reset_ti_so:
         print msg_reset
-        mov score_x, 0       ; reset tỉ số của x về 0
-        mov score_o, 0       ; reset tỉ số của o về 0
-        mov game_count, 0    ; reset số ván game đã chơi về 0
-
+        mov score_x, 0      ; reset tỉ số của x về 0
+        mov score_o, 0      ; reset tỉ số của o về 0
+        mov game_count, 0   ; reset số ván game đã chơi về 0
     tiep_tuc_choi:
         print msg_replay    
         mov ah, 1           ; nhập ký tự bằng hàm 1
